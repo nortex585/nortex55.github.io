@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZyperGPT - Ultimate V7 (Voice)</title>
+    <!-- İkon Seti -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- FONT KÜTÜPHANESİ -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Amatic+SC:wght@700&family=Architects+Daughter&family=Audiowide&family=Bangers&family=Black+Ops+One&family=Caveat:wght@700&family=Cinzel:wght@700&family=Comfortaa:wght@700&family=Courier+Prime&family=Creepster&family=Dancing+Script&family=Exo+2:wght@700&family=Gloria+Hallelujah&family=Indie+Flower&family=Lobster&family=Monoton&family=Orbitron:wght@500&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:ital,wght@1,500&family=Press+Start+2P&family=Righteous&family=Russo+One&family=Shadows+Into+Light&family=Special+Elite&family=VT323&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- TEMA DEĞİŞKENLERİ --- */
+        :root {
+            --bg-sidebar: #171717;
+            --bg-main: #212121;
+            --bg-input: #2f2f2f;
+            --text-primary: #ececec;
+            --text-secondary: #b4b4b4;
+            --hover-color: #2f2f2f;
+            --border-color: rgba(255,255,255,0.1);
+            --code-bg: #0d0d0d;
+            --user-msg-bg: #2f2f2f;
+            --ai-msg-bg: transparent;
+            --accent: #10a37f;
+            --accent-hover: #0d8a6a;
+            --thinking-bg: #2b2b2b;
+            --mic-active: #ff4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            font-size: 15px;
+        }
+
+        /* --- AUTH OVERLAY --- */
+        #auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 10000;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        .auth-box {
+            background: #1e1e1e; padding: 40px; border-radius: 16px; width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 1px solid var(--border-color); text-align: center;
+        }
+        .auth-logo { font-size: 40px; color: var(--accent); margin-bottom: 20px; }
+        .auth-title { font-size: 24px; font-weight: bold; margin-bottom: 30px; }
+        .auth-input {
+            width: 100%; padding: 12px; margin-bottom: 15px; background: #2d2d2d;
+            border: 1px solid #444; border-radius: 8px; color: white; outline: none;
+        }
+        .auth-input:focus { border-color: var(--accent); }
+        .auth-btn {
+            width: 100%; padding: 12px; border: none; border-radius: 8px;
+            background: var(--accent); color: white; font-weight: bold; cursor: pointer;
+            transition: 0.2s; margin-bottom: 10px;
+        }
+        .auth-btn:hover { background: var(--accent-hover); }
+        .auth-link { color: var(--text-secondary); font-size: 13px; cursor: pointer; text-decoration: underline; }
+        .guest-btn { background: transparent; border: 1px solid #444; color: #ccc; margin-top: 10px; }
+        .guest-btn:hover { background: #333; }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 260px; background: var(--bg-sidebar); display: flex; flex-direction: column;
+            padding: 15px 10px; border-right: 1px solid var(--border-color);
+        }
+        .new-chat-btn {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s;
+            border: 1px solid var(--border-color); margin-bottom: 20px;
+        }
+        .new-chat-btn:hover { background-color: var(--hover-color); }
+        .section-label { font-size: 11px; font-weight: 600; color: #666; padding: 10px 12px; text-transform: uppercase; }
+        .history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+        .history-item {
+            padding: 10px 12px; border-radius: 8px; color: var(--text-primary); cursor: pointer;
+            font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: 0.2s;
+        }
+        .history-item:hover { background-color: var(--hover-color); }
+        .user-profile {
+            margin-top: auto; padding: 15px; border-top: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .logout-btn { background: none; border: none; color: #ff4444; cursor: pointer; font-size: 14px; }
+
+        /* --- CHAT AREA --- */
+        .main-chat { flex: 1; display: flex; flex-direction: column; position: relative; background: var(--bg-main); }
+        .top-bar {
+            padding: 10px; text-align: center; border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary); font-size: 13px; font-weight: 500;
+        }
+        .messages-container { flex: 1; overflow-y: auto; padding-bottom: 120px; scroll-behavior: smooth; }
+        .messages-width { max-width: 800px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+
+        .message-row { display: flex; gap: 16px; width: 100%; }
+        .message-row.user { justify-content: flex-end; }
+        .message-row.ai { justify-content: flex-start; }
+
+        .msg-content-box {
+            max-width: 85%; padding: 10px 15px; border-radius: 12px;
+            font-size: 15px; line-height: 1.6; position: relative;
+        }
+        .message-row.user .msg-content-box { background-color: var(--user-msg-bg); border-bottom-right-radius: 2px; }
+        .message-row.ai .msg-content-box { background-color: transparent; padding: 0; max-width: 100%; }
+
+        .msg-avatar {
+            width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: white; color: black; font-weight: bold; margin-top: 2px;
+        }
+
+        /* --- STYLES FOR CONTENT --- */
+        .msg-text strong { font-weight: 700; color: #fff; }
+        .msg-text em { font-style: italic; color: #d1d1d1; }
+        .msg-text h3 { font-size: 18px; font-weight: 700; margin: 20px 0 10px 0; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+        .inline-code { background: #3a3a3a; padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 13px; color: #e0e0e0; }
+
+        .thought-process {
+            background: var(--thinking-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; margin-bottom: 15px; overflow: hidden;
+        }
+        .thought-header {
+            padding: 8px 12px; background: rgba(0,0,0,0.2); color: #888;
+            font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;
+        }
+        .thought-content {
+            padding: 12px; font-size: 13px; color: #ccc; font-style: italic;
+            border-top: 1px solid var(--border-color); display: none; font-family: 'Inter', sans-serif;
+        }
+        .thought-process.open .thought-content { display: block; }
+
+        .code-block-wrapper { margin: 10px 0; background: var(--code-bg); border-radius: 6px; overflow: hidden; border: 1px solid #333; }
+        .code-header { background: #252525; padding: 5px 10px; font-size: 12px; color: #aaa; display: flex; justify-content: space-between; }
+        .code-content { padding: 10px; overflow-x: auto; color: #d4d4d4; font-family: 'JetBrains Mono', monospace; font-size: 13px; white-space: pre; }
+        .copy-code-btn { background: transparent; border: none; color: #b4b4b4; cursor: pointer; font-size: 12px; }
+
+        /* INPUT & UI ELEMENTS */
+        .input-area-wrapper { position: absolute; bottom: 0; left: 0; width: 100%; background: var(--bg-main); padding: 10px 20px 30px; }
+        .input-container { max-width: 800px; margin: 0 auto; position: relative; }
+        
+        .model-menu {
+            position: absolute; bottom: 60px; right: 60px; background: #252525; border: 1px solid #444; 
+            border-radius: 12px; padding: 5px; display: none; z-index: 50; width: 150px;
+        }
+        .model-menu.active { display: block; }
+        .model-option { padding: 10px; cursor: pointer; border-radius: 8px; font-size: 13px; display: flex; align-items: center; gap: 8px; color: #ccc; }
+        .model-option.selected { color: var(--accent); font-weight: bold; }
+
+        .input-box {
+            background: var(--bg-input); border-radius: 24px; padding: 8px 12px;
+            display: flex; align-items: flex-end; gap: 10px; border: 1px solid transparent;
+        }
+        .input-box:focus-within { border-color: #555; background: #2a2a2a; }
+        textarea { flex: 1; background: transparent; border: none; color: white; resize: none; max-height: 200px; padding: 10px 0; font-size: 15px; outline: none; }
+        
+        .action-icon-btn { width: 32px; height: 32px; border-radius: 50%; border: none; background: transparent; color: #b4b4b4; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .send-btn { width: 32px; height: 32px; background: white; color: black; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .send-btn:disabled { background: #555; cursor: default; }
+
+        .img-preview { max-width: 100px; max-height: 100px; border-radius: 8px; position: absolute; bottom: 70px; left: 0; display: none; border: 1px solid #555; }
+        
+        /* Drag Overlay */
+        #drag-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 2000; border: 4px dashed #666; }
+        
+        .thinking-indicator { display: none; align-items: center; gap: 10px; color: #b4b4b4; font-size: 14px; margin-top: 10px; margin-left: 46px; }
+        .message-actions { display: flex; gap: 10px; margin-top: 5px; opacity: 0; transition: 0.2s; }
+        .message-row:hover .message-actions { opacity: 1; }
+        .action-btn { background: transparent; border: none; color: #777; cursor: pointer; font-size: 12px; }
+
+        /* MİKROFON BUTONU */
+        #mic-btn.listening { color: var(--mic-active); animation: pulse-mic 1.5s infinite; }
+        @keyframes pulse-mic { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+    </style>
+</head>
+<body>
+
+    <!-- AUTH -->
+    <div id="auth-overlay">
+        <div id="login-form" class="auth-box">
+            <div class="auth-logo"><i class="fas fa-dragon"></i></div>
+            <div class="auth-title">ZyperGPT'ye Giriş</div>
+            <input type="text" id="login-user" class="auth-input" placeholder="Kullanıcı Adı">
+            <input type="password" id="login-pass" class="auth-input" placeholder="Şifre">
+            <button class="auth-btn" onclick="login()">Giriş Yap</button>
+            <div style="margin-top:10px;"><span class="auth-link" onclick="showRegister()">Hesabın yok mu? Kayıt Ol</span></div>
+            <button class="auth-btn guest-btn" onclick="guestLogin()">Misafir Olarak Devam Et</button>
+        </div>
+        <div id="register-form" class="auth-box" style="display:none;">
+            <div class="auth-logo"><i class="fas fa-dragon"></i></div>
+            <div class="auth-title">Kayıt Ol</div>
+            <input type="text" id="reg-user" class="auth-input" placeholder="Kullanıcı Adı Seç">
+            <input type="password" id="reg-pass" class="auth-input" placeholder="Şifre Belirle">
+            <input type="date" id="reg-dob" class="auth-input">
+            <button class="auth-btn" onclick="register()">Kayıt Ol</button>
+            <div style="margin-top:10px;"><span class="auth-link" onclick="showLogin()">Zaten hesabın var mı? Giriş Yap</span></div>
+        </div>
+    </div>
+
+    <!-- APP -->
+    <div class="sidebar">
+        <div class="new-chat-btn" onclick="startNewChat()">
+            <div style="display:flex; align-items:center; gap:10px;"><i class="fas fa-dragon"></i> <span>Yeni Sohbet</span></div>
+            <i class="far fa-edit"></i>
+        </div>
+        <div class="section-label">Geçmiş Sohbetler</div>
+        <div class="history-list" id="history-list"></div>
+        <div class="user-profile">
+            <div class="profile-info">
+                <div class="auth-logo" style="font-size:20px; margin:0;"><i class="fas fa-user-circle"></i></div>
+                <div id="current-username" style="font-size:14px; font-weight:bold;">Misafir</div>
+            </div>
+            <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </div>
+
+    <div class="main-chat">
+        <div class="top-bar" id="top-bar-status">Zyper 4o Ultra</div>
+        <div class="messages-container" id="messages-container">
+            <div class="messages-width" id="messages-list"></div>
+        </div>
+        <div class="input-area-wrapper">
+            <div class="input-container">
+                <div class="model-menu" id="model-menu">
+                    <div class="model-option selected" onclick="selectModel('fast')" id="opt-fast"><i class="fas fa-bolt"></i> Hızlı</div>
+                    <div class="model-option" onclick="selectModel('thinking')" id="opt-think"><i class="fas fa-brain"></i> Düşünen</div>
+                </div>
+                <img id="img-preview" class="img-preview">
+                <div class="input-box">
+                    <button class="action-icon-btn" onclick="document.getElementById('file-upload').click()"><i class="fas fa-plus"></i></button>
+                    <input type="file" id="file-upload" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+                    <textarea id="user-input" rows="1" placeholder="Zyper'a mesaj gönder..." oninput="handleInput(this)"></textarea>
+                    
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <!-- Mikrofon Butonu -->
+                        <button class="action-icon-btn" id="mic-btn" onclick="toggleDictation()" title="Sesle Yaz">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+
+                        <button class="action-icon-btn" onclick="toggleModelMenu()" title="Model Seç"><i class="fas fa-layer-group"></i></button>
+                        <button class="send-btn" id="send-btn" disabled onclick="sendMessage()"><i class="fas fa-arrow-up"></i></button>
+                    </div>
+                </div>
+                <div style="text-align:center; font-size:11px; color:#555; margin-top:5px;">Zyper hata yapabilir.</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="drag-overlay"><h1 style="color:white;">Resmi Buraya Bırak</h1></div>
+
+    <script>
+        const apiKey = "AIzaSyDxidj4FLxXd2NmfQzUBzwJFOt33XQ8toA";
+        let currentUser = null, isGuest = false, chatContext = [], currentMode = "fast", currentImageBase64 = null, abortController = null, isGenerating = false;
+
+        // AUTH
+        if(!localStorage.getItem('zyper_users')) localStorage.setItem('zyper_users', JSON.stringify({}));
+        if(!localStorage.getItem('zyper_chats')) localStorage.setItem('zyper_chats', JSON.stringify({}));
+
+        function showRegister() { document.getElementById('login-form').style.display = 'none'; document.getElementById('register-form').style.display = 'block'; }
+        function showLogin() { document.getElementById('register-form').style.display = 'none'; document.getElementById('login-form').style.display = 'block'; }
+        
+        function register() {
+            const u = document.getElementById('reg-user').value.trim(), p = document.getElementById('reg-pass').value.trim();
+            if(!u || !p) return alert("Eksik bilgi.");
+            const users = JSON.parse(localStorage.getItem('zyper_users'));
+            if(users[u]) return alert("Kullanıcı adı dolu.");
+            users[u] = { pass: p }; localStorage.setItem('zyper_users', JSON.stringify(users));
+            alert("Kayıt başarılı."); showLogin();
+        }
+        function login() {
+            const u = document.getElementById('login-user').value.trim(), p = document.getElementById('login-pass').value.trim();
+            const users = JSON.parse(localStorage.getItem('zyper_users'));
+            if(users[u] && users[u].pass === p) { currentUser = u; isGuest = false; startSession(); }
+            else alert("Hatalı giriş.");
+        }
+        function guestLogin() { currentUser = "Misafir"; isGuest = true; startSession(); }
+        function startSession() {
+            document.getElementById('auth-overlay').style.display = 'none';
+            document.getElementById('current-username').innerText = currentUser;
+            loadHistory(); startNewChat();
+        }
+        function logout() { location.reload(); }
+
+        // HISTORY
+        function loadHistory() {
+            const list = document.getElementById('history-list'); list.innerHTML = "";
+            if(isGuest) return;
+            const chats = JSON.parse(localStorage.getItem('zyper_chats'))[currentUser] || [];
+            chats.forEach((chat, i) => {
+                const div = document.createElement('div'); div.className = 'history-item';
+                div.innerText = chat.title; div.onclick = () => loadChat(i);
+                list.appendChild(div);
+            });
+        }
+        function saveChat() {
+            if(isGuest || chatContext.length < 2) return;
+            const all = JSON.parse(localStorage.getItem('zyper_chats'));
+            if(!all[currentUser]) all[currentUser] = [];
+            const title = chatContext[0].parts[0].text.substring(0, 20) + "...";
+            if(chatContext.length === 2) {
+                all[currentUser].push({ title: title, messages: chatContext });
+            } else {
+                const len = all[currentUser].length;
+                if(len > 0) all[currentUser][len-1].messages = chatContext;
+            }
+            localStorage.setItem('zyper_chats', JSON.stringify(all));
+            loadHistory();
+        }
+        
+        function loadChat(index) {
+            if(isGuest) return;
+            const chats = JSON.parse(localStorage.getItem('zyper_chats'))[currentUser] || [];
+            const chat = chats[index];
+            if(!chat) return;
+            chatContext = chat.messages;
+            document.getElementById('messages-list').innerHTML = "";
+            chatContext.forEach(msg => {
+                let text = ""; let img = null;
+                if(msg.parts) { msg.parts.forEach(p => { if(p.text) text += p.text; if(p.inlineData) img = `data:image/jpeg;base64,${p.inlineData.data}`; }); }
+                if(msg.role === 'user') appendUserMessage(text, img);
+                else appendStaticAIMessage(text);
+            });
+        }
+
+        // APP
+        function toggleModelMenu() { document.getElementById('model-menu').classList.toggle('active'); }
+        function selectModel(m) {
+            currentMode = m; document.querySelectorAll('.model-option').forEach(e => e.classList.remove('selected'));
+            document.getElementById(m==='fast'?'opt-fast':'opt-think').classList.add('selected');
+            document.getElementById('top-bar-status').innerText = m==='fast'?"Zyper 4o Ultra":"Zyper o1 Thinking";
+            toggleModelMenu();
+        }
+        function handleInput(el) {
+            el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px';
+            document.getElementById('send-btn').disabled = el.value.trim()==="";
+        }
+        function handleFileSelect(input) {
+            const f = input.files[0]; if(!f) return;
+            // IMAGE OPTIMIZATION: Resize image if too large
+            resizeImage(f, 800, 800, (resizedBase64) => {
+                currentImageBase64 = resizedBase64;
+                document.getElementById('img-preview').src = `data:image/jpeg;base64,${resizedBase64}`;
+                document.getElementById('img-preview').style.display='block';
+                document.getElementById('send-btn').disabled = false;
+            });
+        }
+
+        function resizeImage(file, maxWidth, maxHeight, callback) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function (event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function () {
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) {
+                        if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                    } else {
+                        if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // Compress
+                    callback(dataUrl.split(',')[1]);
+                }
+            }
+        }
+        
+        // --- MICROPHONE LOGIC ---
+        let recognition;
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'tr-TR';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                const input = document.getElementById('user-input');
+                input.value += (input.value ? " " : "") + transcript;
+                handleInput(input);
+                document.getElementById('mic-btn').classList.remove('listening');
+            };
+            
+            recognition.onerror = function() {
+                document.getElementById('mic-btn').classList.remove('listening');
+            };
+            
+            recognition.onend = function() {
+                document.getElementById('mic-btn').classList.remove('listening');
+            };
+        }
+
+        function toggleDictation() {
+            if (!recognition) { alert("Tarayıcınız sesli girişi desteklemiyor."); return; }
+            const btn = document.getElementById('mic-btn');
+            if (btn.classList.contains('listening')) {
+                recognition.stop();
+            } else {
+                recognition.start();
+                btn.classList.add('listening');
+            }
+        }
+        
+        // UI HELPERS
+        function copyText(btn) { navigator.clipboard.writeText(btn.closest('.message-row').querySelector('.msg-text').innerText); }
+        function scrollToBottom() { const c = document.getElementById('messages-container'); c.scrollTop = c.scrollHeight; }
+        
+        function updateButtonState(generating) {
+            isGenerating = generating;
+            const btn = document.getElementById('send-btn');
+            if(generating) {
+                btn.innerHTML = '<i class="fas fa-stop"></i>';
+                btn.disabled = false;
+                btn.onclick = () => { if(abortController) abortController.abort(); stopGeneration(); };
+            } else {
+                btn.innerHTML = '<i class="fas fa-arrow-up"></i>';
+                btn.disabled = document.getElementById('user-input').value.trim() === "";
+                btn.onclick = sendMessage;
+            }
+        }
+
+        function stopGeneration() {
+            isGenerating = false;
+            if(document.querySelector('.thinking-indicator')) document.querySelector('.thinking-indicator').style.display = 'none';
+            updateButtonState(false);
+        }
+
+        function startNewChat() {
+            chatContext = []; document.getElementById('messages-list').innerHTML = `<div style="text-align:center; padding:50px; color:#555;"><i class="fas fa-dragon" style="font-size:48px; margin-bottom:20px;"></i><h2>Nasıl yardımcı olabilirim?</h2></div>`;
+        }
+
+        // MARKDOWN & PARSING
+        function escapeHtml(t) { if(!t) return ""; return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+        function parseMarkdown(text) {
+            if(!text) return "";
+            let parts = text.split("```");
+            let html = "";
+            parts.forEach((p, i) => {
+                if(i%2===1) {
+                    html += `<div class="code-block-wrapper"><div class="code-header">Kod <button class="copy-code-btn" onclick="navigator.clipboard.writeText(this.parentElement.nextElementSibling.innerText)"><i class="far fa-copy"></i></button></div><div class="code-content">${escapeHtml(p)}</div></div>`;
+                } else {
+                    let t = escapeHtml(p);
+                    t = t.replace(/\[font=(.*?)\](.*?)\[\/font\]/g, '<span style="font-family:\'$1\',sans-serif">$2</span>');
+                    t = t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    t = t.replace(/### (.*?)\n/g, '<h3>$1</h3>');
+                    t = t.replace(/\n/g, '<br>');
+                    html += t;
+                }
+            });
+            return html;
+        }
+
+        function appendUserMessage(text, img) {
+            if(document.querySelector('.messages-list > div')?.innerText?.includes('Nasıl yardımcı')) document.getElementById('messages-list').innerHTML = "";
+            const div = document.createElement('div'); div.className = 'message-row user';
+            let html = `<div class="user-actions"><button class="action-btn" onclick="copyText(this)"><i class="far fa-copy"></i></button></div><div class="msg-content-box">`;
+            if(img) html += `<img src="${img}" class="user-uploaded-image">`;
+            if(text) html += `<div class="msg-text">${escapeHtml(text)}</div>`;
+            html += `</div>`;
+            div.innerHTML = html;
+            document.getElementById('messages-list').appendChild(div);
+            scrollToBottom();
+        }
+
+        function appendAIMessagePlaceholder() {
+            const div = document.createElement('div'); div.className = 'message-row ai';
+            div.innerHTML = `<div class="msg-avatar"><i class="fas fa-dragon"></i></div><div class="msg-content-box"><div class="thinking-indicator" style="display:flex"><i class="fas fa-circle-notch fa-spin"></i> Düşünüyor...</div></div>`;
+            document.getElementById('messages-list').appendChild(div);
+            scrollToBottom();
+            return div.querySelector('.msg-content-box');
+        }
+
+        function appendStaticAIMessage(rawText) {
+            const div = document.createElement('div'); div.className = 'message-row ai';
+            let content = "";
+            if(rawText && rawText.includes('<thinking>')) {
+                const match = rawText.match(/<thinking>([\s\S]*?)<\/thinking>/);
+                if(match) {
+                    const thinkPart = match[1];
+                    content += `<div class="thought-process"><div class="thought-header" onclick="this.parentElement.classList.toggle('open')"><i class="fas fa-brain"></i> Düşünce Süreci</div><div class="thought-content">${escapeHtml(thinkPart)}</div></div>`;
+                    rawText = rawText.replace(/<thinking>[\s\S]*?<\/thinking>/, "").trim();
+                }
+            }
+            content += `<div class="msg-text">${parseMarkdown(rawText)}</div>`;
+            div.innerHTML = `<div class="msg-avatar"><i class="fas fa-dragon"></i></div><div class="msg-content-box">${content}</div>`;
+            document.getElementById('messages-list').appendChild(div);
+            scrollToBottom();
+        }
+
+        // --- STREAMING LOGIC ---
+        async function streamMessage(fullText, targetDiv) {
+            let mainText = fullText;
+            if(fullText.includes('<thinking>')) {
+                const thinkMatch = fullText.match(/<thinking>([\s\S]*?)<\/thinking>/);
+                if(thinkMatch) {
+                    const thinkContent = thinkMatch[1];
+                    const thinkHTML = `<div class="thought-process"><div class="thought-header" onclick="this.parentElement.classList.toggle('open')"><i class="fas fa-brain"></i> Düşünce Süreci</div><div class="thought-content">${escapeHtml(thinkContent)}</div></div>`;
+                    targetDiv.insertAdjacentHTML('afterbegin', thinkHTML); 
+                    mainText = fullText.replace(/<thinking>[\s\S]*?<\/thinking>/, "").trim();
+                }
+            }
+
+            const msgTextDiv = document.createElement('div'); msgTextDiv.className = 'msg-text';
+            targetDiv.appendChild(msgTextDiv);
+            const actionsHTML = `<div class="message-actions"><button class="action-btn" onclick="copyText(this)"><i class="far fa-copy"></i></button></div>`;
+            targetDiv.insertAdjacentHTML('beforeend', actionsHTML);
+
+            const parts = mainText.split("```");
+            for(let i=0; i<parts.length; i++) {
+                if(!isGenerating) break;
+                if(i%2===1) { // Code
+                    const code = parts[i];
+                    msgTextDiv.insertAdjacentHTML('beforeend', `<div class="code-block-wrapper"><div class="code-header">Kod <button class="copy-code-btn"><i class="far fa-copy"></i></button></div><div class="code-content">${escapeHtml(code)}</div></div>`);
+                    await new Promise(r => setTimeout(r, 50));
+                } else { // Text
+                    const htmlChunk = parseMarkdown(parts[i]);
+                    const temp = document.createElement('div'); temp.innerHTML = htmlChunk;
+                    await typeNodes(temp, msgTextDiv);
+                }
+                scrollToBottom();
+            }
+            stopGeneration();
+        }
+
+        async function typeNodes(source, target) {
+            const nodes = Array.from(source.childNodes);
+            for (const node of nodes) {
+                if(!isGenerating) return;
+                if (node.nodeType === Node.TEXT_NODE) {
+                    const text = node.textContent;
+                    for (let c of text) {
+                        if(!isGenerating) return;
+                        target.appendChild(document.createTextNode(c));
+                        await new Promise(r => setTimeout(r, 5));
+                    }
+                } else {
+                    const el = node.cloneNode(false); target.appendChild(el);
+                    if(node.childNodes.length > 0) await typeNodes(node, el);
+                }
+                scrollToBottom();
+            }
+        }
+
+        // ENTER KEY HANDLER
+        document.getElementById('user-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const val = this.value.trim();
+                if (val.length > 0 || currentImageBase64) {
+                    if (isGenerating) stopGeneration();
+                    else sendMessage();
+                }
+            }
+        });
+
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const text = input.value.trim();
+            if(!text && !currentImageBase64) return;
+
+            input.value = ""; document.getElementById('img-preview').style.display="none";
+            
+            appendUserMessage(text, currentImageBase64 ? document.getElementById('img-preview').src : null);
+            
+            const parts = [];
+            if(text) parts.push({ text: text });
+            if(currentImageBase64) { parts.push({ inlineData: { mimeType: "image/jpeg", data: currentImageBase64 } }); currentImageBase64 = null; }
+            
+            chatContext.push({ role: "user", parts: parts });
+            
+            const aiBox = appendAIMessagePlaceholder();
+            updateButtonState(true); 
+
+            abortController = new AbortController();
+
+            try {
+                let sysPrompt = "Sen Zyper'sın. Zyper Inc. tarafından üretildin bilgisini SADECE sorulursa ver. Normalde direkt konuya gir. Kodlamada uzmansın. Zengin metin kullan. ";
+                if(currentMode==='thinking') sysPrompt += "Cevap vermeden önce <thinking> etiketi içinde detaylı düşünce sürecini yaz.";
+                
+                const model = parts.some(p=>p.inlineData) ? "gemini-2.5-flash-image-preview" : "gemini-2.5-flash-preview-09-2025";
+
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ 
+                        contents: chatContext, 
+                        systemInstruction: { parts: [{ text: sysPrompt }] },
+                        safetySettings: [
+                            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+                            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
+                        ]
+                    }),
+                    signal: abortController.signal
+                });
+                
+                const data = await res.json();
+                
+                if (!data.candidates || data.candidates.length === 0) {
+                     if (data.promptFeedback && data.promptFeedback.blockReason) throw new Error(`Güvenlik filtresi: ${data.promptFeedback.blockReason}`);
+                     throw new Error("API yanıt vermedi (Boş cevap).");
+                }
+
+                const aiCandidate = data.candidates[0];
+                if (!aiCandidate.content || !aiCandidate.content.parts || aiCandidate.content.parts.length === 0) throw new Error("API boş içerik döndürdü.");
+
+                const aiText = aiCandidate.content.parts[0].text;
+                
+                aiBox.innerHTML = ""; 
+                chatContext.push({ role: "model", parts: [{ text: aiText }] });
+                saveChat(); 
+                
+                await streamMessage(aiText, aiBox);
+
+            } catch(e) {
+                if(e.name !== 'AbortError') {
+                    aiBox.innerHTML = `<span style="color:#ff4444">Hata: ${e.message}</span>`;
+                    stopGeneration();
+                } else {
+                    console.log("Kullanıcı durdurdu.");
+                }
+            }
+        }
+
+        document.body.addEventListener('dragover', e => { e.preventDefault(); document.getElementById('drag-overlay').style.display='flex'; });
+        document.getElementById('drag-overlay').addEventListener('dragleave', () => document.getElementById('drag-overlay').style.display='none');
+        document.getElementById('drag-overlay').addEventListener('drop', e => {
+            e.preventDefault(); document.getElementById('drag-overlay').style.display='none';
+            handleFileSelect({files:e.dataTransfer.files});
+        });
+
+    </script>
+</body>
+</html>
